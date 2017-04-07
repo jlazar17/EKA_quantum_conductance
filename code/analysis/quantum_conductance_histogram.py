@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-f', help='specify infile paths. more than one infile can\
 	be specified', nargs='+')
 parser.add_argument('-l', help='Specify a lower bound for the histogram. By \
-	default it is 0.1', type=float, default=0.1)
+	default it is 0.5', type=float, default=0.5)
 parser.add_argument('-u', help='specify a lower bound for the histogram. By \
 	default it is 3', type=float, default = 3)
 parser.add_argument('-n', type=int, default=2, help='Allows the user to specify\
