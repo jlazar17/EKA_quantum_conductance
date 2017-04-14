@@ -4,9 +4,6 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-# for the igor code to run
-import re
-import struct
 
 # the number of lines in the output file containing data to be used in the 
 # histogram is 10000
@@ -38,9 +35,9 @@ def makeDataArray(infile_array):
 	return dataArray
 
 def makeHist(dataArray):
-	n, bins, patches = plt.hist(dataArray, 1000, color='black', alpha=0.75)
-	binMiddle = findBiggestBinsMiddles(n,bins,args['n'], .7)
-#	plt.axvline(x=binMiddle, color='red')
+	n, bins, patches=plt.hist(dataArray, 1000, color='black', alpha=0.75)
+	modeBinMiddle=findModeBinsMiddles(n,bins,args['n'], .7)
+	plt.axvline(x=binMiddle, color='red')
 	plt.ylabel('Counts')
 	plt.xlabel('Conductance (G0)')
 	plt.savefig('conductance_histogram_for_conductance_block.png')
@@ -50,16 +47,11 @@ def makeHist(dataArray):
 # return. I.e. for the biggest bin middle n=1. It also ignores bins whose
 # conductance value is greater than the lower bound since values close to 0
 # tend to have many counts
-def findBiggestBinsMiddles(counts, binEdges, n, lowerBound):
-	import heapq
-	largestElements = heapq.nlargest(n,counts)
-	boundedLargestElements=[i for i in largestElements if i>lowerBound]
-	countIndeces = [np.where(counts==i) for i in boundedLargestElements]
-	print(countIndeces, type(countIndeces))
-	binMiddles = [(binEdges[i[0][0]]+binEdges[i[0][0]+1])/float(2) for i in\
-		 countIndeces]
-	print(binMiddles)
-	return binMiddles
+def findModeBinsMiddles(counts, binEdges, n, lowerBound):
+	largestCount=int(np.amax(counts))
+	binEdgeIndex=np.where(counts==largestCount)[0][0]
+	binMiddle=(binEdges[binEdgeIndex]+binEdges[binEdgeIndex+1])/2.0
+	return binMiddle
 
 def boundData(min, max, dataArray):
 	#goodIndeces = np.zeros(len(dataArray))
@@ -67,9 +59,9 @@ def boundData(min, max, dataArray):
 	goodDataArray = [i for i in dataArray if (i<max and i>min)]
 	return goodDataArray
 
-def fitGaussian(mode, binsArray, countsArray):
-	lowerBound,upperBound = mode-.25,mode+.25
-	return lowerBound
+# accepts a vector whose entries are the x
+def lorentzian(x,center):
+	return (x[1]/(2*math.pi*(x[0]-center)**2*(.5*x[1])**2))+x[2]
 
 def main(infileArray):
 #	conductanceBlock = infile[-5]
