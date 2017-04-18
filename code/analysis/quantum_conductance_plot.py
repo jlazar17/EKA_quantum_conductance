@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+import os
 
 # Only the first 10000 lines of the conductance text files contain conductance
 # data
@@ -13,26 +14,34 @@ NUM_LINES=10000
 ENTRIES_PER_LINE=100
 
 parser = argparse.ArgumentParser(description=DESC)
-parser.add_argument('-e', nargs='+',\
-	help='Specify the infile path for file containing extension information')
-parser.add_argument('-c', nargs='+',\
-	help='Specify the infile patt for file containing conductance information')
+parser.add_argument('-e', nargs='+',required=True,\
+	help='[required] Specify the infile path for file containing extension \
+	information')
+parser.add_argument('-c', nargs='+',required=True,\
+	help='[required] Specify the infile patt for file containing conductance \
+	information')
 parser.add_argument('-n', \
 	help='Specify how may traces to generate. By default this is 100, i.e. the \
 	the number of traces per infile',\
 	default=100)
+parser.add_argument('-d', required=True,\
+	help='[required] Specify the date the data was taken on. This is used to \
+	generate the directory in which plots will be saved')
 # returns a dictionary whose keys are the letters corresponding to command line\
 # flags
 args=vars(parser.parse_args())
 
+# FUNCTIONS FOR FORMATTING INPUT FILES
+# takes text of the form PullOutExtension_<number>.txt as output by the Python
+# package for converting Igor binary files to text files 
 def makeExtensionArray(extensionInfile):
 	with open(extensionInfile) as f:
 		extensionArray=[float(line.rstrip('\n')) for line in f]
 	return extensionArray
-
+# takes text of the form PullOutConductanceBlock_<number>.txt as output by the \
+# Python package for converting Igor binary files to text files
 def makeConductanceMatrix(conductanceInfile):
 	dataArray=np.zeros(NUM_LINES*ENTRIES_PER_LINE)
-	print(conductanceInfile)
 	with open(conductanceInfile) as f: 
 		lines=[line.rstrip('\n').split('\t') for line in f][:NUM_LINES]
 		for i in range(NUM_LINES):
@@ -41,10 +50,9 @@ def makeConductanceMatrix(conductanceInfile):
 	conductanceMatrix=np.reshape(dataArray,(NUM_LINES,len(dataArray)/NUM_LINES))
 	return conductanceMatrix
 
-#def boundConductanceArray(conductanceArray,upperBound):
-#	conductanceArray=[i for i in conductanceArray if i<upperBound]
-#	return conductanceArray
-
+# FUNCTIONS FOR FORMATTING DATA TO MAKE SENSIBLE PLOTS
+# return the index of the first element of an input array whose value is less \
+# than in input number
 def findFirstInstance(array, number):
 	index=np.nan
 	for i in range(len(array)):
@@ -61,6 +69,9 @@ def truncateArray(array,startIndex,endIndex):
 	truncatedArray=array[startIndex-1:endIndex]
 	return truncatedArray
 
+# truncates input conductanceArray and extensionArray so that, when plotted,
+# they are scaled reasonably. Also reverses the extensionArray so that
+# increasing value corresponds to increasing distance between tip and wafer
 def makeArraysForPlot(conductanceArray,extensionArray,upperBound,lowerBound):
 	sIndex=findFirstInstance(conductanceArray,upperBound)
 	eIndex=findFirstInstance(conductanceArray,lowerBound)
@@ -72,19 +83,28 @@ def makeArraysForPlot(conductanceArray,extensionArray,upperBound,lowerBound):
 	extensionArray=_[::-1]
 	return conductanceArray,extensionArray
 
-def generateTrace(extensionArray,conductanceArray,n):
+# MAKES PLOT OF DISTANCE FROM TIP VERSUS CONDUCTANCE
+def generateTrace(extensionArray,conductanceArray,n,path):
 	fig=plt.figure()
 	ax=plt.subplot(111)
 	ax.plot(extensionArray, conductanceArray)
-	fig.savefig('conductance_trace_'+str(n)+'.png')
+	fig.savefig(path+'conductance_trace_'+str(n)+'.png')
+	plt.close()
 
-def main(eInfiles,cInfiles):
+def makePath(date, number):
+	path='./data/qc_data_'+date+'/plots/traces_'+str(number)+'/'
+	if not os.path.exists(path):
+		os.makedirs(path)
+	return path
+
+def main(eInfiles,cInfiles,date):
 	for i in range(len(eInfiles)):
-		print(cInfiles)
+		cBlockNumber=cInfiles[i][-5]
+		path=makePath(date,cBlockNumber)
 		cMatrix=makeConductanceMatrix(cInfiles[i])
 		eArray=makeExtensionArray(eInfiles[i])
-		for i in range(len(cMatrix[1,:])):
-			c,e=makeArraysForPlot(cMatrix[:,i],eArray,10,0.1)
-			generateTrace(e,c,i+1)
+		for j in range(len(cMatrix[1,:])):
+			c,e=makeArraysForPlot(cMatrix[:,j],eArray,10,0.1)
+			generateTrace(e,c,j+1,path)
 
-main(args['e'],args['c'])
+main(args['e'],args['c'],args['d'])
