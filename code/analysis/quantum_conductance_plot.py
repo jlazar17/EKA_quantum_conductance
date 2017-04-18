@@ -25,8 +25,9 @@ parser.add_argument('-n', \
 	the number of traces per infile',\
 	default=100)
 parser.add_argument('-d', required=True,\
-	help='[required] Specify the date the data was taken on. This is used to \
-	generate the directory in which plots will be saved')
+	help='[required] Specify the date the data was taken on in the form \
+	mm-dd-yyyy. This is used to generate the directory in which plots will be \
+	saved')
 # returns a dictionary whose keys are the letters corresponding to command line\
 # flags
 args=vars(parser.parse_args())
@@ -84,15 +85,15 @@ def makeArraysForPlot(conductanceArray,extensionArray,upperBound,lowerBound):
 	return conductanceArray,extensionArray
 
 # MAKES PLOT OF DISTANCE FROM TIP VERSUS CONDUCTANCE
-def generateTrace(extensionArray,conductanceArray,n,path):
+def generateTrace(extensionArray,conductanceArray,n,path,date):
 	fig=plt.figure()
 	ax=plt.subplot(111)
 	ax.plot(extensionArray, conductanceArray)
-	fig.savefig(path+'conductance_trace_'+str(n)+'.png')
+	fig.savefig(path+'conductance_trace_'+date+'_'+str(n)+'.png')
 	plt.close()
 
 def makePath(date, number):
-	path='./data/qc_data_'+date+'/plots/traces_'+str(number)+'/'
+	path='./data/qc_data_'+date+'/plots/traces/'+str(number)+'/'
 	if not os.path.exists(path):
 		os.makedirs(path)
 	return path
@@ -105,6 +106,6 @@ def main(eInfiles,cInfiles,date):
 		eArray=makeExtensionArray(eInfiles[i])
 		for j in range(len(cMatrix[1,:])):
 			c,e=makeArraysForPlot(cMatrix[:,j],eArray,10,0.1)
-			generateTrace(e,c,j+1,path)
+			generateTrace(e,c,j+1,path,date)
 
 main(args['e'],args['c'],args['d'])
