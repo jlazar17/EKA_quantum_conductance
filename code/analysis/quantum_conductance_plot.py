@@ -1,4 +1,4 @@
-#! usr/bin/python
+#! usaved')/bin/python
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,6 +31,10 @@ parser.add_argument('-d', required=True,\
 # returns a dictionary whose keys are the letters corresponding to command line\
 # flags
 args=vars(parser.parse_args())
+
+# Changes settings in matplotlib to allow use of Latex formatting
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
 
 # FUNCTIONS FOR FORMATTING INPUT FILES
 # takes text of the form PullOutExtension_<number>.txt as output by the Python
@@ -89,11 +93,13 @@ def generateTrace(extensionArray,conductanceArray,n,path,date):
 	fig=plt.figure()
 	ax=plt.subplot(111)
 	ax.plot(extensionArray, conductanceArray)
+	ax.set_xlabel(r'\textit{Displacement (nm)}')
+	ax.set_ylabel(r'\textit{Conductance (G_{0}})')
 	fig.savefig(path+'conductance_trace_'+date+'_'+str(n)+'.png')
 	plt.close()
 
 def makePath(date, number):
-	path='./data/qc_data_'+date+'/plots/traces/'+str(number)+'/'
+	path='./data/qc_data_'+date+'/plots/conductance_block_'+str(number)+'_traces/'
 	if not os.path.exists(path):
 		os.makedirs(path)
 	return path
